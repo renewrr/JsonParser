@@ -1,0 +1,677 @@
+<!DOCTYPE html>
+<head>
+	<script src="libs/jquery.min.js"></script>
+	<link href="libs/jsonTree/jsonTree.css" rel="stylesheet" />
+	<script src="libs/jsonTree/jsonTree.js"></script>
+</head>
+<html>
+	<body>
+
+		<label>Json Text:</label></br>
+		<textarea id="JsonInput" name="JsonInput" rows="4" cols="50"></textarea></br>
+		<input type="submit" value="Submit" onclick="run()">
+		<br/>
+		<label id="L1" style="display:none">Json Parser Result</label>
+		<div id="wrapper"></div>
+		<label id="L2" style="display:none">Built in Parser Result</label>
+		<div id="wrapper_ans"></div>
+	</body>
+</html>
+<script type="text/javascript">
+	let typeCat = new Map([
+	  ['[', 'L_Brack'],
+	  [']', 'R_Brack'],
+	  ['{', 'L_Curl'],
+	  ['}', 'R_Curl'],
+	  ['"', 'Quote'],
+	  [':', 'Colon'],
+	  ['digit', 'Digit'],
+	  ['other', 'Character'],
+	  [',', 'Comma'],
+	  ['ws', 'WS'],
+	  ['.', 'Dec_Point']
+	])
+	let codeZero = "0".charCodeAt();
+	let codeNine = "9".charCodeAt();
+	var stack = []
+	var curStr = []
+	function run(){
+		var JsonText = $("#JsonInput").val()
+		var currPos = 0
+		var currChar = ''
+		var len = JsonText.length
+		var state = 0//0 = empty wait, 1 = bracket, 2 = curly
+		var errFlag = false
+		var OBJ = {}
+		var ARR = []
+		var everything = []
+		var tmp
+		//console.log(getObject(JsonText,currPos)[0])
+		while(currPos < len){
+			currChar = JsonText.charAt(currPos)
+			currChar = charEval(currChar)
+			if(currChar[1] == "L_Brack"){
+				tmp = new getArray(JsonText,currPos)
+				deep_tmp = JSON.parse(JSON.stringify(tmp[0]))
+				console.log("Arr Before:",JSON.parse(JSON.stringify(everything)))
+				if(tmp[2]){
+					currPos = tmp[1]
+					errFlag = true
+					break
+				}
+				everything.push(deep_tmp)
+				console.log(deep_tmp)
+				currPos = tmp[1]
+				currPos += 1
+			}
+			else if(currChar[1] == "L_Curl"){
+				tmp = new  getObject(JsonText,currPos)
+				deep_tmp = JSON.parse(JSON.stringify(tmp[0]))
+				console.log("Arr Before:",JSON.parse(JSON.stringify(everything)))
+				if(tmp[2]){
+					currPos = tmp[1]
+					errFlag = true
+					break
+				}
+				everything.push(deep_tmp)
+				console.log(deep_tmp)
+				currPos = tmp[1]
+				currPos += 1
+			}
+			else if(currChar[1] == "WS"){
+				currPos += 1
+			}
+			else{
+				errFlag = true
+			}
+			if(errFlag)break
+		}
+		if(errFlag){
+			console.log('Error at position : ' + currPos)
+			var wrapper = document.getElementById("wrapper")
+			wrapper.innerHTML = ('Error at position : ' + currPos)
+			var wrapper2 = document.getElementById("wrapper_ans")
+			wrapper2.innerHTML = ""
+			document.getElementById("L1").style.display="none";
+			document.getElementById("L2").style.display="none";
+		}
+		else{
+			var wrapper = document.getElementById("wrapper")
+			wrapper.innerHTML = ""
+			document.getElementById("L1").style.display="block";
+			var tree = jsonTree.create(everything[0], wrapper)
+			tree.expand(function(node) {
+			   return node.childNodes.length < 2 || node.label === 'phoneNumbers'
+			})
+			var wrapper2 = document.getElementById("wrapper_ans")
+			wrapper2.innerHTML = ""
+			document.getElementById("L2").style.display="block";
+			var tree2 = jsonTree.create(JSON.parse(JsonText), wrapper2)
+			tree2.expand(function(node) {
+			   return node.childNodes.length < 2 || node.label === 'phoneNumbers'
+			});
+		}
+		//console.log(everything)
+	}
+	function charEval(ch){
+		type = typeCat.get(ch)
+		if(digitCheck(ch)){
+			type = 'Digit'
+		}
+		if(wsCheck(ch)){
+			type = 'WS'
+		}
+		if(type === undefined){
+			type = 'Character'
+		}
+		return new Object([ch,type])
+	}
+	function digitCheck(ch){
+		return(ch.charCodeAt() >= codeZero && ch.charCodeAt() <= codeNine)
+	}
+	function wsCheck(ch){
+		code = ch.charCodeAt() 
+		return(code == 32 || code == 13 || code == 10 || code == 9)
+	}
+
+	function getObject(text,currPos){
+		var state = "ID"//0 = id,1 = item,2 = end
+		var currId = ""
+		var currItem = String("")
+		var idStart = false
+		var errFlag = false
+		var out = {}
+		var valueType = "NA"//0 = number,1 = string,2 = array,3 = bool,4 = null
+		var colFlag = false
+		var strFlag = false
+		var done = false
+		var currChar = ''
+		var decFlag = false
+		var afterDecFlag = false
+		var arr_flag = false
+		var obj_flag = false
+
+		while(true){
+			currPos+=1
+			currChar = text.charAt(currPos)
+			currChar = charEval(currChar)
+			console.log("OBJ",currChar[0],state)
+			switch(state){
+				case "ID":
+					if(idStart){
+						if(currChar[1] == "Quote"){
+							idStart = false
+							state = "Item"
+							break
+						}
+						else{
+							currId = currId + currChar[0]
+						}
+					}
+					else{
+						if(currChar[1] == "Quote"){
+							idStart = true
+						}
+						else if(currChar[1] == "WS"){
+							continue
+						}
+						else if(currChar[1] == "R_Curl"){
+							done = true
+							break
+						}
+						else{
+							errFlag = true
+							break
+						}
+					}
+					break
+				case "Item":
+					if(colFlag){
+						switch(valueType){
+							case "NA":
+								if(currChar[1] == "L_Curl"){
+									tmp = new getObject(text,currPos)
+									if(tmp[2]){
+										errFlag = true
+										break
+									}
+									deep_tmp = JSON.parse(JSON.stringify(tmp[0]))//Deep clone, To be replaced by sth better
+									console.log("Obj In Obj:",tmp[0])
+									console.log("Obj Before:",JSON.parse(JSON.stringify(out)))
+									currItem = deep_tmp
+									currPos = tmp[1]
+									out[currId] = currItem	
+									state = "End"
+									obj_flag = true
+									break
+								}
+								else if(currChar[1] == "L_Brack"){
+									tmp = new getArray(text,currPos)
+									if(tmp[2]){
+										errFlag = true
+										break
+									}
+									deep_tmp = JSON.parse(JSON.stringify(tmp[0]))//Deep clone, To be replaced by sth better
+									console.log("Arr In Obj:",tmp[0])
+									console.log("Obj Before:",JSON.parse(JSON.stringify(out)))
+									currItem = deep_tmp
+									currPos = tmp[1]
+									out[currId] = currItem
+									state = "End"
+									arr_flag = true
+									break
+								}
+								else if(currChar[1] == "Digit"){
+									currItem += currChar[0]
+									valueType = "number"
+								}
+								else if(currChar[1] == "Quote"){
+									valueType = "string"
+								}
+								else if(currChar[1] == "Character"){
+									if(currChar[0] == 't' || currChar[0] == 'f' || currChar[0] == 'n'){
+										currItem += currChar[0]
+										valueType = "special"
+									}
+								}
+								else if(currChar[1] == "WS"){
+									continue
+								}
+								else{
+									errFlag = true
+									break
+								}
+								break
+							case "number":
+								if(currChar[1] == "Digit"){
+									if(decFlag)afterDecFlag = true
+									currItem += currChar[0]
+									break
+								}
+								else if(currChar[1] == "Dec_Point"){
+									if(decFlag){
+										errFlag = true
+										break
+									}
+									else{
+										decFlag = true
+										currItem += currChar[0]
+									}
+								}
+								else if(currChar[1] == 'Comma'){
+									if((afterDecFlag && decFlag) || (!afterDecFlag && !decFlag)){
+										out[currId] = Number(currItem)
+										console.log("Number:",currItem)
+										currId = ""
+										currItem = ""
+										idStart = false
+										valueType = "NA"
+										colFlag = false
+										strFlag = false
+										decFlag = false
+										afterDecFlag = false
+										state = "ID"
+										arr_flag = false
+										obj_flag = false
+										break
+									}
+									else{
+										errFlag = true
+										break
+									}
+								}
+								else if(currChar[1] == 'R_Curl'){
+									if((afterDecFlag && decFlag) || (!afterDecFlag && !decFlag)){
+										out[currId] = Number(currItem)
+										console.log("Number:",currItem)
+										done = true
+										break
+									}
+									else{
+										errFlag = true
+										break
+									}
+								}
+								else if(currChar[1] == 'WS'){
+									if((afterDecFlag && decFlag) || (!afterDecFlag && !decFlag)){
+										out[currId] = Number(currItem)
+										console.log("Number:",currItem)
+										state = "End"
+										break
+									}
+									else{
+										errFlag = true
+										break
+									}
+								}
+								else{
+									errFlag = true
+									break
+								}
+								break
+							case "string":
+								if(currChar[1] == "Quote"){
+									out[currId] = currItem
+									console.log("string:",currItem)
+									state = "End"
+									break
+								}
+								else{
+									currItem += currChar[0]
+								}
+								break
+							case "special":
+								if(currChar[1] == "Character"){
+									currItem += currChar[0]
+								}
+								else if(currChar[1] == "WS" || currChar[1] == "Comma"){
+									if(currItem == "false"){
+										out[currId] = false
+										console.log("false:",false)
+									}
+									else if(currItem == "true"){
+										out[currId] = true
+										console.log("true:",true)
+									}
+									else if(currItem == "null"){
+										out[currId] = null
+										console.log("null:",null)
+									}
+									else{
+										errFlag = true
+									}
+									if(currChar[1] == "WS")state = "End"
+									if(currChar[1] == "Comma"){
+										currId = ""
+										currItem = ""
+										idStart = false
+										valueType = "NA"
+										colFlag = false
+										strFlag = false
+										decFlag = false
+										afterDecFlag = false
+										state = "ID"
+										arr_flag = false
+										obj_flag = false
+									}
+								}
+								else if(currChar[1] == "R_Curl"){
+									done = true
+									if(currItem == "false"){
+										out[currId] = false
+										console.log("false:",false)
+									}
+									else if(currItem == "true"){
+										out[currId] = true
+										console.log("true:",true)
+									}
+									else if(currItem == "null"){
+										out[currId] = null
+										console.log("null:",null)
+									}
+									else{
+										errFlag = true
+										break
+									}
+								}
+								break
+						}
+					}
+					else{
+						if(currChar[1] == "Colon"){
+							colFlag = true
+						}
+						else if(currChar[1] == "WS"){
+							continue
+						}
+						else{
+							errFlag = true
+							break
+						}
+					}
+					break
+				case "End":
+					currId = ""
+					currItem = ""
+					idStart = false
+					valueType = "NA"
+					colFlag = false
+					strFlag = false
+					decFlag = false
+					afterDecFlag = false
+					if(arr_flag){
+						if(currChar[1] == "WS") continue
+						if(currChar[1] == "R_Brack"){
+							//state = "ID"
+							done = true
+							arr_flag = false
+							break
+						}
+					}
+					if(obj_flag){
+						if(currChar[1] == "WS") continue
+						if(currChar[1] == "R_Curl"){
+							//state = "ID"
+							done = true
+							obj_flag = false
+							break
+						}
+					}
+					if(currChar[1] == "Comma")state = "ID"
+					else if(currChar[1] == "WS")continue
+					else if(currChar[1] == "R_Curl")done = true
+					else errFlag = true
+					break
+
+				if(errFlag)break
+			}
+			if(errFlag)break
+			if(done)break
+		}
+		console.log("OBJ_ERR:",errFlag)
+		console.log("OBJ:",out)
+		return [out,currPos,errFlag]
+	}
+	function getArray(text,currPos){
+		var nextFlag = true
+		var valueType = "NA"
+		var strFlag = false
+		var numFlag = false
+		var decFlag = false
+		var currItem = String("")
+		var afterDecFlag = false
+		var done = false
+		var errFlag = false
+		var currChar = ''
+		var out = []
+
+		while(true){
+			currPos+=1
+			currChar = text.charAt(currPos)
+			currChar = charEval(currChar)
+			console.log("ARR",currChar[0],nextFlag,valueType)
+			if(nextFlag){
+				switch(valueType){
+					case "NA":
+						if(currChar[1] == "R_Brack"){
+							done = true
+							break
+						}
+						if(currChar[1] == "L_Curl"){
+							tmp = new getObject(text,currPos)
+							if(tmp[2]){
+								errFlag = true
+								break
+							}
+							deep_tmp = JSON.parse(JSON.stringify(tmp[0]))//Deep clone, To be replaced by sth better
+							console.log("Obj In Array:",tmp[0])
+							console.log("Arr Before:",JSON.parse(JSON.stringify(out)))
+							currItem = deep_tmp
+							currPos = tmp[1]
+							out.push(currItem)
+							nextFlag = false
+							break
+						}
+						else if(currChar[1] == "L_Brack"){
+							tmp = new getArray(text,currPos)
+							if(tmp[2]){
+								errFlag = true
+								break
+							}
+							deep_tmp = JSON.parse(JSON.stringify(tmp[0]))//Deep clone, To be replaced by sth better
+							console.log("Arr In Array:",tmp[0])
+							console.log("Arr Before:",JSON.parse(JSON.stringify(out)))
+							currItem = deep_tmp
+							currPos = tmp[1]
+							out.push(currItem)
+							nextFlag = false
+							break
+						}
+						else if(currChar[1] == "Digit"){
+							currItem += currChar[0]
+							valueType = "number"
+						}
+						else if(currChar[1] == "Quote"){
+							valueType = "string"
+						}
+						else if(currChar[1] == "Character"){
+							if(currChar[0] == 't' || currChar[0] == 'f' || currChar[0] == 'n'){
+								currItem += currChar[0]
+								valueType = "special"
+							}
+							else{
+								errFlag = true
+								break
+							}
+						}
+						else if(currChar[1] == "WS"){
+							continue
+						}
+						else{
+							errFlag = true
+							break
+						}
+						break
+					case "number":
+						if(currChar[1] == "Digit"){
+							if(decFlag)afterDecFlag = true
+							currItem += currChar[0]
+							break
+						}
+						else if(currChar[1] == "Dec_Point"){
+							if(decFlag){
+								errFlag = true
+								break
+							}
+							else{
+								decFlag = true
+								currItem += currChar[0]
+							}
+						}
+						else if(currChar[1] == 'Comma'){
+							if((afterDecFlag && decFlag) || (!afterDecFlag && !decFlag)){
+								out.push(Number(currItem))
+								console.log("Number:",currItem)
+								currItem = ""
+								nextFlag = true
+								valueType = "NA"
+								strFlag = false
+								numFlag = false
+								decFlag = false
+								afterDecFlag = false
+								done = false
+								errFlag = false
+								break
+							}
+							else{
+								errFlag = true
+								break
+							}
+						}
+						else if(currChar[1] == 'R_Brack'){
+							if((afterDecFlag && decFlag) || (!afterDecFlag && !decFlag)){
+								out.push(Number(currItem))
+								console.log("Number:",currItem)
+								done = true
+								break
+							}
+							else{
+								errFlag = true
+								break
+							}
+						}
+						else if(currChar[1] == 'WS'){
+							if((afterDecFlag && decFlag) || (!afterDecFlag && !decFlag)){
+								out.push(Number(currItem))
+								console.log("Number:",currItem)
+								nextFlag = false
+								break
+							}
+							else{
+								errFlag = true
+								break
+							}
+						}
+						else{
+							errFlag = true
+							break
+						}
+						break
+					case "string":
+						if(currChar[1] == "Quote"){
+							out.push(currItem)
+							console.log("String:",currItem)
+							nextFlag = false
+							break
+						}
+						else{
+							currItem += currChar[0]
+						}
+						break
+					case "special":
+						if(currChar[1] == "Character"){
+							currItem += currChar[0]
+						}
+						else if(currChar[1] == "WS" || currChar[1] == "Comma"){
+							if(currItem == "false"){
+								out.push(false)
+								console.log("false:",currItem)
+							}
+							else if(currItem == "true"){
+								out.push(true)
+								console.log("true:",currItem)
+							}
+							else if(currItem == "null"){
+								out.push(null)
+								console.log("null:",currItem)
+							}
+							else{
+								console.log("Error:",currItem)
+								errFlag = true
+							}
+							if(currChar[1] == "WS")nextFlag = false
+							if(currChar[1] == "Comma"){
+								valueType = "NA"
+								strFlag = false
+								numFlag = false
+								decFlag = false
+								currItem = ""
+								afterDecFlag = false
+								done = false
+								errFlag = false
+								nextFlag = true
+							}
+						}
+						else if(currChar[1] == "R_Brack"){
+							done = true
+							if(currItem == "false"){
+								out.push(false)
+								console.log("false:",currItem)
+							}
+							else if(currItem == "true"){
+								out.push(true)
+								console.log("true:",currItem)
+							}
+							else if(currItem == "null"){
+								out.push(null)
+								console.log("null:",currItem)
+							}
+							else{
+								errFlag = true
+								break
+							}
+						}
+						break
+				}
+			}
+			else{
+				if(currChar[1] == "Comma"){
+					valueType = "NA"
+					strFlag = false
+					numFlag = false
+					decFlag = false
+					currItem = ""
+					afterDecFlag = false
+					done = false
+					errFlag = false
+					nextFlag = true
+				}
+				else if(currChar[1] == "WS"){
+					continue
+				}
+				else if(currChar[1] == "R_Brack"){
+					done = true
+					break
+				}
+				else{
+					errFlag = true
+				}
+			}
+			if(done) break
+			if(errFlag) break
+		}
+		console.log("ARR_ERR:",errFlag)
+		console.log("ARR:",out)
+		return [out,currPos,errFlag]
+	}
+</script>
