@@ -94,6 +94,10 @@
 			wrapper2.innerHTML = ""
 			document.getElementById("L1").style.display="none";
 			document.getElementById("L2").style.display="none";
+			ta = document.getElementById("JsonInput");
+			ta.focus();
+			ta.selectionEnd= currPos;
+			ta.selectionStart= currPos;
 		}
 		else{
 			var wrapper = document.getElementById("wrapper")
@@ -153,6 +157,11 @@
 
 		while(true){
 			currPos+=1
+			
+			if(currPos >= text.length){
+				errFlag = true
+				break
+			}
 			currChar = text.charAt(currPos)
 			currChar = charEval(currChar)
 			console.log("OBJ",currChar[0],state)
@@ -447,6 +456,11 @@
 
 		while(true){
 			currPos+=1
+			
+			if(currPos >= text.length){
+				errFlag = true
+				break
+			}
 			currChar = text.charAt(currPos)
 			currChar = charEval(currChar)
 			console.log("ARR",currChar[0],nextFlag,valueType)
