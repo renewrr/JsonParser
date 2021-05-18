@@ -154,6 +154,7 @@
 		var afterDecFlag = false
 		var arr_flag = false
 		var obj_flag = false
+		var zero_flag = false
 
 		while(true){
 			currPos+=1
@@ -232,8 +233,7 @@
 								}
 								else if(currChar[1] == "Digit"){
 									if(currChar[0] == '0'){
-										errFlag = true
-										break
+										zero_flag = true
 									}
 									currItem += currChar[0]
 									valueType = "number"
@@ -258,6 +258,10 @@
 							case "number":
 								if(currChar[1] == "Digit"){
 									if(decFlag)afterDecFlag = true
+									if(zero_flag){
+										errFlag = true
+										break
+									}
 									currItem += currChar[0]
 									break
 								}
@@ -268,6 +272,7 @@
 									}
 									else{
 										decFlag = true
+										zero_flag = false
 										currItem += currChar[0]
 									}
 								}
@@ -286,6 +291,7 @@
 										state = "ID"
 										arr_flag = false
 										obj_flag = false
+										zero_flag = false
 										break
 									}
 									else{
@@ -507,8 +513,7 @@
 						}
 						else if(currChar[1] == "Digit"){
 							if(currChar[0] == '0'){
-								errFlag = true
-								break
+								zero_flag = true
 							}
 							currItem += currChar[0]
 							valueType = "number"
@@ -537,6 +542,10 @@
 					case "number":
 						if(currChar[1] == "Digit"){
 							if(decFlag)afterDecFlag = true
+							if(zero_flag){
+								errFlag = true
+								break
+							}
 							currItem += currChar[0]
 							break
 						}
@@ -547,6 +556,7 @@
 							}
 							else{
 								decFlag = true
+								zero_flag = false
 								currItem += currChar[0]
 							}
 						}
@@ -563,6 +573,7 @@
 								afterDecFlag = false
 								done = false
 								errFlag = false
+								zero_flag = false
 								break
 							}
 							else{
