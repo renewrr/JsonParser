@@ -231,6 +231,10 @@
 									break
 								}
 								else if(currChar[1] == "Digit"){
+									if(currChar[0] == '0'){
+										errFlag = true
+										break
+									}
 									currItem += currChar[0]
 									valueType = "number"
 								}
@@ -502,6 +506,10 @@
 							break
 						}
 						else if(currChar[1] == "Digit"){
+							if(currChar[0] == '0'){
+								errFlag = true
+								break
+							}
 							currItem += currChar[0]
 							valueType = "number"
 						}
