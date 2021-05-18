@@ -80,3 +80,5 @@ Code clean up : Still a bunch of test prints in the code.
 More efficient syntax rule implementation : Remove the redundent or inefficient flags and checks.
 
 Better UI : Currenty the UI consist of one textarea, three labels with one button.
+
+Scientific notation and Negative number is not properly supported.
