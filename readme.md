@@ -28,7 +28,7 @@ To verify the correctness of our parsed data, we use the native json parsing met
 	])
 This is a map for converting symbols into strings that are easier to read, which makes later parts of the code easier to understand.
 
-# Character evaluation
+### Character evaluation
 	let codeZero = "0".charCodeAt();
 	let codeNine = "9".charCodeAt();
 
