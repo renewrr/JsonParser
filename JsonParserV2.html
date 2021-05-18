@@ -104,16 +104,10 @@
 			wrapper.innerHTML = ""
 			document.getElementById("L1").style.display="block";
 			var tree = jsonTree.create(everything[0], wrapper)
-			tree.expand(function(node) {
-			   return node.childNodes.length < 2 || node.label === 'phoneNumbers'
-			})
 			var wrapper2 = document.getElementById("wrapper_ans")
 			wrapper2.innerHTML = ""
 			document.getElementById("L2").style.display="block";
 			var tree2 = jsonTree.create(JSON.parse(JsonText), wrapper2)
-			tree2.expand(function(node) {
-			   return node.childNodes.length < 2 || node.label === 'phoneNumbers'
-			});
 		}
 		//console.log(everything)
 	}

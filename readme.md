@@ -9,7 +9,7 @@ The [JSON syntax diagram](https://www.json.org/json-en.html) provides a clear vi
 
 The visualization is done with the [jsonTreeViewer](https://github.com/summerstyle/jsonTreeViewer) library.
 
-To verify the correctness of our parsed data, we use the native json parsing method in parallel with our parser, then we visualize both results to see if there are any discrapancy.
+To verify the correctness of our parsed data, we use the native json parsing method in parallel with our parser, then we visualize both results to see if there are any discrepancy.
 
 # Some explanation of the arcane parts of this project
 
