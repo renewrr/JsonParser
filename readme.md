@@ -85,6 +85,8 @@ Better UI : Currenty the UI consist of one textarea, three labels with one butto
 
 # Real problems to be solved
 
-Scientific notation is not properly supported.
+Scientific notation is not supported.
 
-"\\" is not properly supported
+"\\" is not supported
+
+Should just read the official documentation of JSON instead of doing everything by memory, "6 hours of debugging can save you 5 minutes of reading documentation" - some guy on twitter.
