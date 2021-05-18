@@ -154,7 +154,8 @@
 		var afterDecFlag = false
 		var arr_flag = false
 		var obj_flag = false
-		var zero_flag = false
+		var zeroFlag = false
+		var negFlag = false
 
 		while(true){
 			currPos+=1
@@ -233,7 +234,7 @@
 								}
 								else if(currChar[1] == "Digit"){
 									if(currChar[0] == '0'){
-										zero_flag = true
+										zeroFlag = true
 									}
 									currItem += currChar[0]
 									valueType = "number"
@@ -245,6 +246,15 @@
 									if(currChar[0] == 't' || currChar[0] == 'f' || currChar[0] == 'n'){
 										currItem += currChar[0]
 										valueType = "special"
+									}
+									else if(currChar[0] == '-'){
+										currItem += currChar[0]
+										negFlag = true
+										valueType = "number"
+									}
+									else{
+										errFlag = true
+										break
 									}
 								}
 								else if(currChar[1] == "WS"){
@@ -258,10 +268,14 @@
 							case "number":
 								if(currChar[1] == "Digit"){
 									if(decFlag)afterDecFlag = true
-									if(zero_flag){
+									else if(currChar[0] == '0' && negFlag){
+										zeroFlag = true
+									}
+									else if(zeroFlag){
 										errFlag = true
 										break
 									}
+									negFlag = false
 									currItem += currChar[0]
 									break
 								}
@@ -270,9 +284,14 @@
 										errFlag = true
 										break
 									}
+									else if(negFlag){
+										errFlag = true
+										break
+									}
 									else{
 										decFlag = true
-										zero_flag = false
+										zeroFlag = false
+										negFlag = false
 										currItem += currChar[0]
 									}
 								}
@@ -291,7 +310,8 @@
 										state = "ID"
 										arr_flag = false
 										obj_flag = false
-										zero_flag = false
+										zeroFlag = false
+										negFlag = false
 										break
 									}
 									else{
@@ -463,6 +483,8 @@
 		var errFlag = false
 		var currChar = ''
 		var out = []
+		var negFlag = false
+		var zeroFlag = false
 
 		while(true){
 			currPos+=1
@@ -513,7 +535,7 @@
 						}
 						else if(currChar[1] == "Digit"){
 							if(currChar[0] == '0'){
-								zero_flag = true
+								zeroFlag = true
 							}
 							currItem += currChar[0]
 							valueType = "number"
@@ -526,6 +548,11 @@
 								currItem += currChar[0]
 								valueType = "special"
 							}
+							else if(currChar[0] == '-'){
+										currItem += currChar[0]
+										valueType = "number"
+										negFlag = true
+									}
 							else{
 								errFlag = true
 								break
@@ -542,10 +569,14 @@
 					case "number":
 						if(currChar[1] == "Digit"){
 							if(decFlag)afterDecFlag = true
-							if(zero_flag){
+							else if(currChar[0] == '0' && negFlag){
+								zeroFlag = true
+							}
+							else if(zeroFlag){
 								errFlag = true
 								break
 							}
+							negFlag = false
 							currItem += currChar[0]
 							break
 						}
@@ -554,9 +585,14 @@
 								errFlag = true
 								break
 							}
+							else if(negFlag){
+								errFlag = true
+								break
+							}
 							else{
 								decFlag = true
-								zero_flag = false
+								zeroFlag = false
+								negFlag = false
 								currItem += currChar[0]
 							}
 						}
@@ -573,7 +609,8 @@
 								afterDecFlag = false
 								done = false
 								errFlag = false
-								zero_flag = false
+								zeroFlag = false
+								negFlag = false
 								break
 							}
 							else{
