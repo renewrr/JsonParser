@@ -85,4 +85,4 @@ Better UI : Currenty the UI consist of one textarea, three labels with one butto
 
 Scientific notation is not properly supported.
 
-"\" is not properly supported
+"\\" is not properly supported
