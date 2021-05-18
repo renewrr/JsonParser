@@ -81,4 +81,8 @@ More efficient syntax rule implementation : Remove the redundent or inefficient 
 
 Better UI : Currenty the UI consist of one textarea, three labels with one button.
 
-Scientific notation and Negative number is not properly supported.
+# Real problems to be solved
+
+Scientific notation is not properly supported.
+
+"\" is not properly supported
