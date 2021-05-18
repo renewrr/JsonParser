@@ -2,12 +2,6 @@
 
 ![](https://img.shields.io/github/stars/renewrr/JsonParser) ![](https://img.shields.io/github/forks/renewrr/JsonParser) ![](https://img.shields.io/github/tag/renewrr/JsonParser) ![](https://img.shields.io/github/release/renewrr/JsonParser) ![](https://img.shields.io/github/issues/renewrr/JsonParser)
 
-**Table of Contents**
-
-[TOCM]
-
-[TOC]
-
 # What is this project?
 This project is a demonstation of a self written json parser for the 2021 Spring SM404 Compiler course, written entirely in HTML and JavaScript.
 
