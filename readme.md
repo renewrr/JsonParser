@@ -7,10 +7,12 @@ This project is a demonstation of a self written json parser for the 2021 Spring
 
 The visualization is done with the [jsonTreeViewer](https://github.com/summerstyle/jsonTreeViewer) library.
 
-To verify the correctness of our parsed data, we use the native json parsing 				method in parallel with our parser, then we visualize both results to see 							if there are any discrapancy.
-#Some explanation of the arcane parts of this project
+To verify the correctness of our parsed data, we use the native json parsing method in parallel with our parser, then we visualize both results to see if there are any discrapancy.
 
-#####Mapping for important symbols
+# Some explanation of the arcane parts of this project
+
+### Mapping for important symbols
+
 	let typeCat = new Map([
 	  ['[', 'L_Brack'],
 	  [']', 'R_Brack'],
@@ -25,7 +27,8 @@ To verify the correctness of our parsed data, we use the native json parsing 			
 	  ['.', 'Dec_Point']
 	])
 This is a map for converting symbols into strings that are easier to read, which makes later parts of the code easier to understand.
-##### Character evaluation
+
+# Character evaluation
 	let codeZero = "0".charCodeAt();
 	let codeNine = "9".charCodeAt();
 
@@ -53,7 +56,8 @@ The charEval function is the most critical of this part of code, it reads each c
 Since there are multiple characters designated as a digit or white space, we need two more functions to correctly identify these characters.(The digit check function was shamelessly "borrowed" from stackoverflow)
 If a character is not identified as any of the types, we designate it as "character" type, which in hindsight is a bit unhelpful.
 
-#####Recursive object and array evaluation
+### Recursive object and array evaluation
+
 	function getObject(text,currPos)
 	function getArray(text,currPos)
 
@@ -63,13 +67,13 @@ The main challenge is that each value of an Object or element of an Array could 
 
 This implementation makes it really easy to solve the nested array/object problem without major code modification, although some readability is sacrificed since I just made everything up as I go, so nothing really was planned.
 
-#####How do I keep the position of the current character?
+### How do I keep the position of the current character?
 
 After each action, I always left the position at the last evaluated character, which we increments after we are ready to move to the next character.
 
 We pass the current position to the getObject or getArray function when we encounters a nested item, these functions return the last position of the item with the evaluated item, we advance the position after everything is done and we are ready to progess to the next character.
 
-#####To do list
+### To do list
 
 Code clean up : Still a bunch of test prints in the code.
 
