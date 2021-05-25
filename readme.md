@@ -54,26 +54,28 @@ This is a map for converting symbols into strings that are easier to read, which
 		code = ch.charCodeAt() 
 		return(code == 32 || code == 13 || code == 10 || code == 9)
 	}
-The charEval function is the most critical of this part of code, it reads each character then returns its type.
+The charEval function is the most critical of this part of code, it reads one character then returns the type that character should be assigned to, according to the map in the previous section.
+
 Since there are multiple characters designated as a digit or white space, we need two more functions to correctly identify these characters.(The digit check function was shamelessly "borrowed" from stackoverflow)
-If a character is not identified as any of the types, we designate it as "character" type, which in hindsight is a bit unhelpful.
+
+If a character is not identified as any of the types, we designate it as "character" type, since I think anymore types would be counterproductive.
 
 ### Recursive object and array evaluation
 
 	function getObject(text,currPos)
 	function getArray(text,currPos)
 
-These are the bread and butter of the parser, with each character type identified, I implement the entire Json syntax rule as a bunch of if else statement, which I think is the quick and dirty way to do this.
+These are the bread and butter of the parser, with each character type identified, I implement the entire Json syntax rule as a bunch of if else statement, which I think is the quick and dirty way to do this. ### Still true, but much more is added
 
 The main challenge is that each value of an Object or element of an Array could also be an Object or Array, when we encounter this scenario, the function recursively calls itself or calls the other function to evaluate the nested item.
 
-This implementation makes it really easy to solve the nested array/object problem without major code modification, although some readability is sacrificed since I just made everything up as I go, so nothing really was planned.
+This implementation makes it really easy to solve the nested array/object problem without major code modification, although some readability is sacrificed since I just made everything up as I go, so nothing really was planned. ### Not entirely true after V3
 
 ### How do I keep the position of the current character?
 
 After each action, I always left the position at the last evaluated character, which we increments after we are ready to move to the next character.
 
-We pass the current position to the getObject or getArray function when we encounters a nested item, these functions return the last position of the item with the evaluated item, we advance the position after everything is done and we are ready to progess to the next character.
+We pass the current position to the getObject or getArray function when we encounters a nested item, these functions return the last position of the item with the evaluated item, we advance the position after everything is done and we are ready to progess to the next character. ### Some operation now requires one look ahead symbol
 
 # To do list
 
