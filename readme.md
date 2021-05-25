@@ -65,17 +65,17 @@ If a character is not identified as any of the types, we designate it as "charac
 	function getObject(text,currPos)
 	function getArray(text,currPos)
 
-These are the bread and butter of the parser, with each character type identified, I implement the entire Json syntax rule as a bunch of if else statement, which I think is the quick and dirty way to do this. ### Still true, but much more is added
+These are the bread and butter of the parser, with each character type identified, I implement the entire Json syntax rule as a bunch of if else statement, which I think is the quick and dirty way to do this. <sub><sup>Still true, but much more is added</sup></sub>
 
 The main challenge is that each value of an Object or element of an Array could also be an Object or Array, when we encounter this scenario, the function recursively calls itself or calls the other function to evaluate the nested item.
 
-This implementation makes it really easy to solve the nested array/object problem without major code modification, although some readability is sacrificed since I just made everything up as I go, so nothing really was planned. ### Not entirely true after V3
+This implementation makes it really easy to solve the nested array/object problem without major code modification, although some readability is sacrificed since I just made everything up as I go, so nothing really was planned. <sub><sup>Not entirely true after V3</sup></sub>
 
 ### How do I keep the position of the current character?
 
 After each action, I always left the position at the last evaluated character, which we increments after we are ready to move to the next character.
 
-We pass the current position to the getObject or getArray function when we encounters a nested item, these functions return the last position of the item with the evaluated item, we advance the position after everything is done and we are ready to progess to the next character. ### Some operation now requires one look ahead symbol
+We pass the current position to the getObject or getArray function when we encounters a nested item, these functions return the last position of the item with the evaluated item, we advance the position after everything is done and we are ready to progess to the next character. <sub><sup>Some operation now requires one look ahead symbol</sup></sub>
 
 # To do list
 
