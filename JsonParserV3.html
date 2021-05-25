@@ -232,7 +232,9 @@
 					errFlag = true
 				}
 				else{
-					output.push(tmp[0])
+					if(tmp[0] !== undefined){
+						output.push(tmp[0])
+					}
 					currPos = tmp[1]
 					status = "AfterValue"
 				}
@@ -333,11 +335,12 @@
 		let len = JsonText.length
 		var errFlag = false
 		var done = false
-		var output = null
+		var output
 		while(currPos < len){
 			currPos+=1
 			currChar = JsonText.charAt(currPos)
 			currChar = charEval(currChar)
+			// console.log(currChar)
 			if(currChar[1] == "WS"){
 				continue
 			}
@@ -356,8 +359,17 @@
 			else if(currChar[0] == 't' || currChar[0] == 'f' || currChar[0] == 'n'){
 				tmp = getSpecial(JsonText,currPos,currChar[0])	
 			}
+			else if(currChar[1] == "R_Curl" || currChar[1] == "R_Brack"){
+				currPos-=1
+				// console.log(output,currPos,errFlag)
+				return [output,currPos,errFlag]
+			}
+			else{
+				errFlag = true
+			}
 			if(tmp[2]){
 				errFlag = true
+				// console.log("ERROR AT GET VALUE")
 			}
 			else{
 				output = tmp[0]
@@ -365,6 +377,7 @@
 				done = true
 			}
 			if(done || errFlag){
+				// console.log("GV",tmp)
 				return [output,currPos,errFlag]
 			}
 		}
@@ -426,6 +439,7 @@
 					}
 					else if(currChar[1] == "WS" || currChar[1] == "Comma" || currChar[1] == "R_Curl" || currChar[1] == "R_Brack"){
 						currPos -= 1
+						// console.log(output)
 						return [parseInt(output),currPos,errFlag]
 					}
 					else{
@@ -437,6 +451,11 @@
 					if(currChar[1] == "Dec_Point"){
 						output += currChar[0]
 						status = "Fraction"
+					}
+					else if(currChar[1] == "WS" || currChar[1] == "Comma" || currChar[1] == "R_Curl" || currChar[1] == "R_Brack"){
+						currPos -= 1
+						// console.log(output,currPos,errFlag)
+						return [parseInt(output),currPos,errFlag]
 					}
 					else{
 						errFlag = true
@@ -459,6 +478,7 @@
 					else if(currChar[1] == "WS" || currChar[1] == "Comma" || currChar[1] == "R_Curl" || currChar[1] == "R_Brack"){
 						if(digitAfterDecimal){
 							currPos -= 1
+							// console.log(output)
 							return [parseFloat(output),currPos,errFlag]
 						}
 						else{
@@ -499,6 +519,7 @@
 									output = parseInt(output)
 								}
 								Exponent = parseInt(Exponent)
+								// console.log(output*Math.pow(10,Exponent))
 								return [output*Math.pow(10,Exponent),currPos,errFlag]//There are some precision problem with this method
 							}
 							else{
