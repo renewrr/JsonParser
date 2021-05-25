@@ -1,0 +1,563 @@
+<!DOCTYPE html>
+<head>
+	<script src="libs/jquery.min.js"></script>
+	<link href="libs/jsonTree/jsonTree.css" rel="stylesheet" />
+	<script src="libs/jsonTree/jsonTree.js"></script>
+</head>
+<html>
+	<body>
+
+		<label>Json Text:</label></br>
+		<textarea id="JsonInput" name="JsonInput" rows="4" cols="50"></textarea></br>
+		<input type="submit" value="Submit" onclick="run()">
+		<br/>
+		<label id="L1" style="display:none">Json Parser Result</label>
+		<div id="wrapper"></div>
+		<label id="L2" style="display:none">Built in Parser Result</label>
+		<div id="wrapper_ans"></div>
+	</body>
+</html>
+<script type="text/javascript">
+	let typeCat = new Map([
+	  ['[', 'L_Brack'],
+	  [']', 'R_Brack'],
+	  ['{', 'L_Curl'],
+	  ['}', 'R_Curl'],
+	  ['"', 'Quote'],
+	  [':', 'Colon'],
+	  ['digit', 'Digit'],
+	  ['other', 'Character'],
+	  [',', 'Comma'],
+	  ['ws', 'WS'],
+	  ['.', 'Dec_Point']
+	])
+	let codeZero = "0".charCodeAt();
+	let codeNine = "9".charCodeAt();
+	let codea = "a".charCodeAt();
+	let codef = "f".charCodeAt();
+	var stack = []
+	var curStr = []
+	function run(){
+		var JsonText = $("#JsonInput").val()
+		var currPos = 0
+		var currChar = ''
+		var len = JsonText.length
+		var state = 0//0 = empty wait, 1 = bracket, 2 = curly
+		var errFlag = false
+		var OBJ = {}
+		var ARR = []
+		var everything = []
+		var tmp
+		while(currPos < len){
+			currChar = JsonText.charAt(currPos)
+			currChar = charEval(currChar)
+			if(currChar[1] == "L_Brack"){
+				tmp = new getArray(JsonText,currPos)
+				if(tmp[2]){
+					currPos = tmp[1]
+					errFlag = true
+					break
+				}
+				everything.push(tmp[0])
+				console.log(tmp)
+				currPos = tmp[1]
+				currPos += 1
+			}
+			else if(currChar[1] == "L_Curl"){
+				tmp = new  getObject(JsonText,currPos)
+				if(tmp[2]){
+					currPos = tmp[1]
+					errFlag = true
+					break
+				}
+				everything.push(tmp[0])
+				console.log(tmp)
+				currPos = tmp[1]
+				currPos += 1
+			}
+			else if(currChar[1] == "WS"){
+				currPos += 1
+			}
+			else{
+				errFlag = true
+			}
+			if(errFlag)break
+		}
+		if(errFlag){
+			console.log('Error at position : ' + currPos)
+			var wrapper = document.getElementById("wrapper")
+			wrapper.innerHTML = ('Error at position : ' + currPos)
+			var wrapper2 = document.getElementById("wrapper_ans")
+			wrapper2.innerHTML = ""
+			document.getElementById("L1").style.display="none";
+			document.getElementById("L2").style.display="none";
+			ta = document.getElementById("JsonInput");
+			ta.focus();
+			ta.selectionEnd= currPos;
+			ta.selectionStart= currPos;
+		}
+		else{
+			var wrapper = document.getElementById("wrapper")
+			wrapper.innerHTML = ""
+			document.getElementById("L1").style.display="block";
+			var tree = jsonTree.create(everything[0], wrapper)
+			var wrapper2 = document.getElementById("wrapper_ans")
+			wrapper2.innerHTML = ""
+			document.getElementById("L2").style.display="block";
+			var tree2 = jsonTree.create(JSON.parse(JsonText), wrapper2)
+		}
+	}
+	function charEval(ch){
+		type = typeCat.get(ch)
+		if(digitCheck(ch)){
+			type = 'Digit'
+		}
+		if(wsCheck(ch)){
+			type = 'WS'
+		}
+		if(type === undefined){
+			type = 'Character'
+		}
+		return new Object([ch,type])
+	}
+	function digitCheck(ch){
+		return(ch.charCodeAt() >= codeZero && ch.charCodeAt() <= codeNine)
+	}
+	function hexCheck(ch){
+		return ( digitCheck(ch) || (ch.charCodeAt() >= codea && ch.charCodeAt() <= codef) )
+ 	}
+	function wsCheck(ch){
+		code = ch.charCodeAt() 
+		return(code == 32 || code == 13 || code == 10 || code == 9)
+	}
+	function getObject(JsonText,currPos){
+		var status = "Start" //Start,BeforeName,~~Name~~,AfterName,~~Value~~,AfterValue
+		var output = {}
+		var currName = ""
+		var currItem = null
+		var errFlag = false
+		var StringSpecial = false
+		var SpecialCase = "N"//N,U
+		var SpecialUni = ""
+		var currChar = ''
+		let len = JsonText.length
+		while(currPos < len){
+			currPos+=1
+			currChar = JsonText.charAt(currPos)
+			currChar = charEval(currChar)
+			switch(status){
+				case "Start":
+					if(currChar[1] == "WS")break
+					else if(currChar[1] == "R_Curl"){
+						return [output,currPos,errFlag]
+					}
+					else if(currChar[1] == "Quote"){
+						tmp = getString(JsonText,currPos)
+						if(tmp[2])errFlag = true
+						else{
+							currPos = tmp[1]
+							currName = tmp[0]
+							status = "AfterName"
+						}
+					}
+					else{
+						errFlag = true
+					}
+					break
+				case "BeforeName":
+					if(currChar[1] == "WS")break
+					else if(currChar[1] == "Quote"){
+						tmp = getString(JsonText,currPos)
+						if(tmp[2])errFlag = true
+						else{
+							currPos = tmp[1]
+							currName = tmp[0]
+							status = "AfterName"
+						}
+					}
+					else{
+						errFlag = true
+					}
+					break
+				case "AfterName":
+					if(currChar[1] == "WS")break
+					else if(currChar[1] == "Colon"){
+						tmp = getValue(JsonText,currPos)
+						if(tmp[2]){
+							errFlag = true
+						}
+						else{
+							output[currName] = tmp[0]
+							currPos = tmp[1]
+							status = "AfterValue"
+						}
+					}
+					else{
+						errFlag = true
+						break
+					}
+					break
+				case "AfterValue":
+					if(currChar[1] == "R_Curl"){
+						return [output,currPos,errFlag]
+					}
+					else if(currChar[1] == "Comma"){
+						status = "BeforeName"
+						currName = ""
+					}
+					else if(currChar[1] == "WS"){
+						continue
+					}
+					else{
+						errFlag = true
+					}
+					break
+			}
+			if(errFlag){
+				return [output,currPos,errFlag]
+			}
+		}
+		return [output,currPos,errFlag]
+	}
+	function getArray(JsonText,currPos){
+		let len = JsonText.length
+		var errFlag = false
+		var status = "BeforeValue"
+		var output = []
+		var errFlag = false
+		while(currPos < len){
+			if(status == "BeforeValue"){
+				tmp = getValue(JsonText,currPos)
+				if(tmp[2]){
+					errFlag = true
+				}
+				else{
+					output.push(tmp[0])
+					currPos = tmp[1]
+					status = "AfterValue"
+				}
+			}
+			else if(status == "AfterValue"){
+				currPos+=1
+				currChar = JsonText.charAt(currPos)
+				currChar = charEval(currChar)
+				if(currChar[1] == "R_Brack"){
+					return [output,currPos,errFlag]
+				}
+				else if(currChar[1] == "Comma"){
+					status = "BeforeValue"
+				}
+				else if(currChar[1] == "WS"){
+					continue
+				}
+				else{
+					errFlag = true
+				}
+			}
+			if(errFlag){
+				return [output,currPos,errFlag]
+			}
+		}
+	}
+	function getString(JsonText,currPos){
+		let len = JsonText.length
+		var currChar = ''
+		var StringSpecial = false
+		var SpecialCase = "N"//N,U
+		var SpecialUni = ""
+		var output = ""
+		var errFlag = false
+		var done = false
+		while(currPos < len){
+			currPos+=1
+			currChar = JsonText.charAt(currPos)
+			currChar = charEval(currChar)
+			if(!StringSpecial){
+				if(currChar[0] == '\\'){
+					StringSpecial = true
+					SpecialCase = "N"
+				}
+				else if(currChar[1] == "Quote"){
+					done = true
+				} 
+				else{
+					output += currChar[0]
+				}
+			}
+			else{
+				switch(SpecialCase){
+					case "N":
+						if(currChar[1] == "Quote"){
+							output += "\""
+						}
+						else if(currChar[0] == "\\" || currChar[0] == "\/"){
+							output += currChar[0]
+						}
+						else if(currChar[0] == "b" || currChar[0] == "f"){
+							output += ""
+						}
+						else if(currChar[0] == "n" || currChar[0] == "r" || currChar[0] == "t"){
+							output += " "
+						}
+						else if(currChar[0] == "u"){
+							SpecialCase = "U"
+							SpecialUni = ""
+							break
+						}
+						else{
+							errFlag = true
+							break
+						}
+						StringSpecial = false
+						break
+					case "U":
+						if(hexCheck(currChar[0])){
+							SpecialUni += currChar[0]
+							if(SpecialUni.length == 4){
+								output += String.fromCharCode(parseInt(SpecialUni, 16))
+								StringSpecial = false
+							}
+						}
+						else{
+							errFlag = true
+							break
+						}
+				}
+			}
+			if(done || errFlag){
+				return [output,currPos,errFlag]
+			}
+		}
+	}
+	function getValue(JsonText,currPos){
+		let len = JsonText.length
+		var errFlag = false
+		var done = false
+		var output = null
+		while(currPos < len){
+			currPos+=1
+			currChar = JsonText.charAt(currPos)
+			currChar = charEval(currChar)
+			if(currChar[1] == "WS"){
+				continue
+			}
+			else if(currChar[1] == "L_Curl"){
+				tmp = getObject(JsonText,currPos)
+			}
+			else if(currChar[1] == "L_Brack"){
+				tmp = getArray(JsonText,currPos)
+			}
+			else if(currChar[1] == "Quote"){
+				tmp = getString(JsonText,currPos)			
+			}
+			else if(currChar[1] == "Digit" || currChar[0] == '-'){
+				tmp = getNumber(JsonText,currPos,currChar[0])
+			}
+			else if(currChar[0] == 't' || currChar[0] == 'f' || currChar[0] == 'n'){
+				tmp = getSpecial(JsonText,currPos,currChar[0])	
+			}
+			if(tmp[2]){
+				errFlag = true
+			}
+			else{
+				output = tmp[0]
+				currPos = tmp[1]
+				done = true
+			}
+			if(done || errFlag){
+				return [output,currPos,errFlag]
+			}
+		}
+	}
+	function getNumber(JsonText,currPos,leading){
+		var errFlag = false
+		var digitAfterDecimal = false
+		var digitAfterExponent = false
+		var canHaveExponentPrefix = true
+		let len = JsonText.length
+		var status = ""//Preprocess,Integer,BeforeFraction,Fraction,Exponent
+		var output = ""
+		var Exponent = ""
+		if(leading == "-"){
+			status = "Preprocess"
+			output += leading
+		}
+		else if(leading.charCodeAt() <= codeNine && leading.charCodeAt() >= codeZero){
+			if(leading == "0"){
+				status = "BeforeFraction"
+				output += leading
+			}
+			else{
+				status = "Integer"
+				output += leading
+			}
+		}
+		while(currPos < len){
+			currPos+=1
+			currChar = JsonText.charAt(currPos)
+			currChar = charEval(currChar)
+			switch(status){
+				case "Preprocess":
+					if(currChar[0].charCodeAt() <= codeNine && currChar[0].charCodeAt() >= codeZero){
+						if(currChar[0] == "0"){
+							status = "BeforeFraction"
+							output += currChar[0]
+						}
+						else{
+							status = "Integer"
+							output += currChar[0]
+						}
+					}
+					else{
+						errFlag = true
+					}
+					break
+				case "Integer":
+					if(currChar[1] == "Digit"){
+						output += currChar[0]
+					}
+					else if(currChar[1] == "Dec_Point"){
+						output += currChar[0]
+						status = "Fraction"
+					}
+					else if(currChar[0] == "e" || currChar[0] == "E"){
+						output += currChar[0]
+						status = "Exponent"
+					}
+					else if(currChar[1] == "WS" || currChar[1] == "Comma" || currChar[1] == "R_Curl" || currChar[1] == "R_Brack"){
+						currPos -= 1
+						return [parseInt(output),currPos,errFlag]
+					}
+					else{
+						errFlag = true
+					}
+
+					break
+				case "BeforeFraction":
+					if(currChar[1] == "Dec_Point"){
+						output += currChar[0]
+						status = "Fraction"
+					}
+					else{
+						errFlag = true
+					}
+					break
+				case "Fraction":
+					if(currChar[1] == "Digit"){
+						output += currChar[0]
+						digitAfterDecimal = true
+					}
+					else if(currChar[0] == "e" || currChar[0] == "E"){
+						if(digitAfterDecimal){
+							output += currChar[0]
+							status = "Exponent"
+						}
+						else{
+							errFlag = true
+						}
+					}
+					else if(currChar[1] == "WS" || currChar[1] == "Comma" || currChar[1] == "R_Curl" || currChar[1] == "R_Brack"){
+						if(digitAfterDecimal){
+							currPos -= 1
+							return [parseFloat(output),currPos,errFlag]
+						}
+						else{
+							errFlag = true
+						}
+					}
+					else{
+						errFlag = true
+					}
+					break
+				case "Exponent":
+					if(canHaveExponentPrefix){
+						if(currChar[0] == "+" || currChar[0] == "-"){
+							Exponent += currChar[0]
+							canHaveExponentPrefix = false
+						}
+						else if(currChar[1] == "Digit"){
+							Exponent += currChar[0]
+							canHaveExponentPrefix = false
+							digitAfterExponent = true
+						}
+						else{
+							errFlag = true
+						}
+					}
+					else{
+						if(currChar[1] == "Digit"){
+							Exponent += currChar[0]
+							digitAfterExponent = true
+						}
+						else if(currChar[1] == "WS" || currChar[1] == "Comma" || currChar[1] == "R_Curl" || currChar[1] == "R_Brack"){
+							if(digitAfterExponent){
+								currPos -= 1
+								if(digitAfterDecimal){
+									output = parseFloat(output)
+								}
+								else{
+									output = parseInt(output)
+								}
+								Exponent = parseInt(Exponent)
+								return [output*Math.pow(10,Exponent),currPos,errFlag]//There are some precision problem with this method
+							}
+							else{
+								errFlag = true
+							}
+						}
+						else{
+							errFlag = true
+						}
+					}
+					break
+			}
+			if(errFlag){
+				return [output,currPos,errFlag]
+			}
+		}
+
+	}
+	function getSpecial(JsonText,currPos,leading){
+		var errFlag = false
+		let len = JsonText.length
+		var output = ""+leading
+		var count = 0
+		while(currPos < len){
+			currPos+=1
+			currChar = JsonText.charAt(currPos)
+			currChar = charEval(currChar)
+			if(currChar[1] != "Character"){
+				errFlag = true
+			}
+			else{
+				output += currChar[0]
+				count+=1
+			}
+			if(count == 3){
+				if(output == "fals"){
+					continue
+				}
+				else if(output == "true"){
+					output = true
+					return[output,currPos,errFlag]
+				}
+				else if(output == "null"){
+					output = null
+					return[output,currPos,errFlag]
+				}
+				else{
+					errFlag = true
+				}
+			}
+			if(count == 4){
+				if(output == "false"){
+					output = false
+					return[output,currPos,errFlag]
+				}
+			}
+			if(errFlag){
+				return[output,currPos,errFlag]
+			}
+		}
+	}
+</script>
