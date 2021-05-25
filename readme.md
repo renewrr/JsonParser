@@ -11,7 +11,7 @@ The visualization is done with the [jsonTreeViewer](https://github.com/summersty
 
 To verify the correctness of our parsed data, we use the native json parsing method in parallel with our parser, then we visualize both results to see if there are any discrepancy.
 
-# Some explanation of the arcane parts of this project
+# Some explanation for the arcane parts of this project
 
 ### Mapping for important symbols
 
@@ -77,16 +77,10 @@ We pass the current position to the getObject or getArray function when we encou
 
 # To do list
 
-Code clean up : Still a bunch of test prints in the code.
-
-More efficient syntax rule implementation : Remove the redundent or inefficient flags and checks.
-
 Better UI : Currenty the UI consist of one textarea, three labels with one button.
+
+Readme update : Update readme to V3.
 
 # Real problems to be solved
 
-Scientific notation is not supported.
-
-"\\" is not supported
-
-Should just read the official documentation of JSON instead of doing everything by memory, "6 hours of debugging can save you 5 minutes of reading documentation" - some guy on twitter.
+Currently none that I am aware of, yay.
