@@ -279,7 +279,10 @@
 				}
 				else if(currChar[1] == "Quote"){
 					done = true
-				} 
+				}
+				else if(currChar[0] == "") {
+					errFlag = true
+				}
 				else{
 					output += currChar[0]
 				}
