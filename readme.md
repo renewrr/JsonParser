@@ -7,7 +7,7 @@ This project is a demonstation of a self written JSON parser for the 2021 Spring
 
 The [JSON syntax diagram](https://www.json.org/json-en.html) provides a clear view of how a parser should work.
 
-Visualization is done with the [jsonTreeViewer](https://github.com/summerstyle/jsonTreeViewer) library.
+Visualization is done with [jsonTreeViewer](https://github.com/summerstyle/jsonTreeViewer).
 
 To verify the correctness of our parsed data, we use the native json parsing method in parallel with our parser, then we visualize both results to see if there are any discrepancy.
 
